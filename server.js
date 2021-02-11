@@ -1,72 +1,35 @@
 // TODO: log set
+import path from "path";
+const __dirname = path.resolve();
 
-/*
-  Copyright 2019 Square Inc.
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-      http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-require('dotenv').config();
-const express = require('express');
-const bodyParser = require('body-parser');
-const crypto = require('crypto');
-const squareConnect = require('square-connect');
+import { payment } from "@api/square/payment.js";
+
+import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
+import bodyParser from "body-parser";
 
 const app = express();
 const port = process.env.PORT;
 
-const accessToken = process.env.SQUARE_ACCESS_TOKEN;
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
 app.use(express.static(__dirname));
 
-// Set Square Connect credentials and environment
-const defaultClient = squareConnect.ApiClient.instance;
-
-const oauth2 = defaultClient.authentications['oauth2'];
-oauth2.accessToken = accessToken;
-
-defaultClient.basePath = process.env.SQUARE_BASEPATH;
-
-app.post('/process-payment', async (req, res) => {
-  const request_params = req.body;
-  const { amount, currency } = req.body;
-  // length of idempotency_key should be less than 45
-  const idempotency_key = crypto.randomBytes(22).toString('hex');
-
-  // Charge the customer's card
-  const payments_api = new squareConnect.PaymentsApi();
-  const request_body = {
-    source_id: request_params.nonce,
-    amount_money: {
-      amount,
-      currency
-    },
-    idempotency_key
-  };
-
-  try {
-    const response = await payments_api.createPayment(request_body);
-    res.status(200).json({
-      'title': 'Payment Successful',
-      'result': response
-    });
-  } catch(error) {
-    res.status(500).json({
-      'title': 'Payment Failure',
-      'result': error.response.text
-    });
-  }
+app.post("/process-payment", async (req) => {
+  payment(req.body);
+  // TODO:
+  //   res.status(200).json({
+  //     title: "Payment Successful",
+  //     result: result,
+  //   });
+  //   res.status(500).json({
+  //     title: "Payment Failure",
+  //     result: error.response.text,
+  //   });
+  // }
 });
 
-app.listen(
-  port,
-  () => console.log(`listening on - http://localhost:${port}`)
-);
+app.listen(port, () => console.log(`listening on - http://localhost:${port}`));
