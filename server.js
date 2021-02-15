@@ -21,6 +21,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(__dirname));
 
 /**
+ * TODO: config setup
+ */
+
+/**
  * 決済処理
  */
 app.post("/process-payment", (req, res) => {
@@ -43,10 +47,12 @@ app.post("/process-payment", (req, res) => {
  */
 const upload = multer({ dest: "tmp/faceapi/uploaded" });
 // TODO: 全判的な処理再検討
-app.post("/face-api", upload.array("files"), (req, res) => {
-  faceDetect(req.files);
-  // TODO: response result
-  res.send(JSON.stringify({ ok: true }));
+app.post("/face-api", upload.array("files"), async (req, res) => {
+  // TODO: delete s3 bucket orderNumber
+  // deleteS3Bucket(req.orderNumber)
+  const resultImgs = await faceDetect(req.files);
+  // TODO: create s3 bucket, upload imgs
+  res.send(JSON.stringify({ ok: true, resultImgs }));
 });
 
 app.listen(port, () => console.log(`listening on - http://localhost:${port}`));
