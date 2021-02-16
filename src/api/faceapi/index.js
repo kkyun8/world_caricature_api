@@ -10,9 +10,13 @@ faceapi.env.monkeyPatch({ Canvas, Image, ImageData, fetch: fetch });
 import {
   faceDetectionNet,
   faceDetectionOptions,
-} from "@config/faceapi/faceDetectionOptions.js";
-import saveFile from "@config/faceapi/saveFile.js";
+} from "../../config/faceapi/faceDetectionOptions.js";
+import saveFile from "../../config/faceapi/saveFile.js";
 
+/**
+ *
+ * @param {webから受け取った写真ファイル（複数）} files
+ */
 export const faceDetect = async (files) => {
   const resultImages = [];
   await faceDetectionNet.loadFromDisk(modelsDir);
@@ -32,7 +36,10 @@ export const faceDetect = async (files) => {
     const originfilename = `${now}_origin_${imgCnt}.jpg`;
     saveFile(originfilename, out.toBuffer("image/jpeg"));
     console.log(`done, saved origin img file:${originfilename}`);
-    resultImages.push(tmpOutDir + originfilename);
+
+    const filepath = `${tmpOutDir}/${originfilename}`;
+    const filename = originfilename;
+    resultImages.push({ filepath, filename });
 
     imgCnt++;
 
@@ -45,7 +52,9 @@ export const faceDetect = async (files) => {
       console.log(`done, saved face cut img file:${fcfilename}`);
 
       fimgCnt++;
-      resultImages.push(tmpOutDir + fcfilename);
+      const filepath = `${tmpOutDir}/${fcfilename}`;
+      const filename = fcfilename;
+      resultImages.push({ filepath, filename });
     }
   }
 

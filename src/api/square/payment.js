@@ -1,7 +1,12 @@
 import crypto from "crypto";
 import squareConnect from "square-connect";
-import { SquareConnectInit } from "@api/square/index.js";
+import { SquareConnectInit } from "../square/index.js";
 
+/**
+ * リクエスト情報から決済を実行する
+ *
+ * @param {*} body
+ */
 export const payment = async (body) => {
   // TODO: 改善
   SquareConnectInit();
