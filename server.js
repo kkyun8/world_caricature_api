@@ -2,6 +2,7 @@
 import path from "path";
 const __dirname = path.resolve();
 
+import { deleteTmpOutDir } from "./src/config/index.js";
 import { payment } from "./src/api/square/payment.js";
 import { faceDetect } from "./src/api/faceapi/index.js";
 import { deleteAllOrderPicture, putOrderPicture } from "./src/api/aws/s3.js";
@@ -11,6 +12,8 @@ dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
 import multer from "multer";
+
+import { lineHandleEvent } from "./src/api/line/index.js";
 
 const app = express();
 const port = process.env.PORT;
@@ -49,10 +52,11 @@ const upload = multer({ dest: "tmp/faceapi/uploaded" });
 // TODO: 全判的な処理再検討
 app.post("/face-api", upload.array("files"), async (req, res) => {
   try {
-    console.log(`start /face-api 対象orderNumber:${orderNumber}`);
-
     const startTime = new Date().getTime();
     const { orderNumber } = req.body;
+    console.log(
+      `---------------start /face-api 対象orderNumber:${orderNumber}---------------`
+    );
 
     // すでにバケットにOrderNumber名でフォルダが存在する場合、削除する
     await deleteAllOrderPicture(orderNumber);
@@ -63,15 +67,30 @@ app.post("/face-api", upload.array("files"), async (req, res) => {
     const putResult = await putOrderPicture(req.body.orderNumber, resultImgs);
 
     const ProcTime = new Date().getTime() - startTime;
-    console.log(`end /face-api 実行時間:${ProcTime}`);
+    console.log(
+      `---------------end /face-api 実行時間:${ProcTime}---------------`
+    );
 
     res.send(
       JSON.stringify({ ok: putResult.ok, orderNumber: req.body.orderNumber })
     );
-    // TODO: tmp内の出力ファイル削除
+    // tmp/outフォルダ削除
+    deleteTmpOutDir();
   } catch {
     res.send(JSON.stringify({ ok: false }));
   }
+});
+
+/**
+ * line-bot message return
+ */
+app.post("/line-callback", (req, res) => {
+  Promise.all(req.body.events.map(lineHandleEvent))
+    .then((result) => res.json(result))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).end();
+    });
 });
 
 app.listen(port, () => console.log(`listening on - http://localhost:${port}`));
