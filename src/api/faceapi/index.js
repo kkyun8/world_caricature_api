@@ -11,7 +11,7 @@ import {
   faceDetectionNet,
   faceDetectionOptions,
 } from "../../config/faceapi/faceDetectionOptions.js";
-import saveFile from "../../config/faceapi/saveFile.js";
+import { saveFile } from "../../config/index.js";
 
 /**
  *
