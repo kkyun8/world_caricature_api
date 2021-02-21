@@ -13,11 +13,14 @@ export const lineBot = line;
  * @param {*} event
  */
 export function lineHandleEvent(event) {
-  if (event.type !== "message" || event.message.type !== "text") {
-    return Promise.resolve(null);
+  if (event.type === "message" || event.message.type === "text") {
+    //TODO: メッセージ内容に合わせて注文情報リターン
+  } else if (event.message.type === "image") {
+    //TODO: イメージの場合
   }
+
+  // TODO: mock echo
   const echo = { type: "text", text: event.message.text };
 
-  // use reply API
   return lineClient.replyMessage(event.replyToken, echo);
 }
