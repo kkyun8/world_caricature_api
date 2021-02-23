@@ -2,7 +2,11 @@
 import path from "path";
 const __dirname = path.resolve();
 
-import { deleteTmpOutDir } from "./src/config/index.js";
+import {
+  deleteTmpData,
+  tmpOutDirPath,
+  tmpFaceapiUploadedDirPath,
+} from "./src/config/index.js";
 import { payment } from "./src/api/square/payment.js";
 import { faceDetect } from "./src/api/faceapi/index.js";
 import { deleteAllOrderPicture, putOrderPicture } from "./src/api/aws/s3.js";
@@ -74,8 +78,9 @@ app.post("/face-api", upload.array("files"), async (req, res) => {
     res.send(
       JSON.stringify({ ok: putResult.ok, orderNumber: req.body.orderNumber })
     );
-    // tmp/outフォルダ削除
-    deleteTmpOutDir();
+    // tmp フォルダ削除
+    deleteTmpData(tmpOutDirPath);
+    deleteTmpData(tmpFaceapiUploadedDirPath);
   } catch {
     res.send(JSON.stringify({ ok: false }));
   }

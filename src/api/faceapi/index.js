@@ -1,4 +1,4 @@
-import { tmpOutDir, modelsDir } from "../../config/index.js";
+import { tmpOutDirPath, modelsDir } from "../../config/index.js";
 import "@tensorflow/tfjs-node";
 import * as faceapi from "face-api.js";
 import fetch from "node-fetch";
@@ -37,7 +37,7 @@ export const faceDetect = async (files) => {
     saveFile(originfilename, out.toBuffer("image/jpeg"));
     console.log(`done, saved origin img file:${originfilename}`);
 
-    const filepath = `${tmpOutDir}/${originfilename}`;
+    const filepath = `${tmpOutDirPath}/${originfilename}`;
     const filename = originfilename;
     resultImages.push({ filepath, filename });
 
@@ -52,7 +52,7 @@ export const faceDetect = async (files) => {
       console.log(`done, saved face cut img file:${fcfilename}`);
 
       fimgCnt++;
-      const filepath = `${tmpOutDir}/${fcfilename}`;
+      const filepath = `${tmpOutDirPath}/${fcfilename}`;
       const filename = fcfilename;
       resultImages.push({ filepath, filename });
     }
