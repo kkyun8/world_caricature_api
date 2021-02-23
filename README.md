@@ -1,13 +1,14 @@
 # world_caricature_api
 
-squareのpaymentFormを利用して決済を実装
-lineメッセージ通知機能などlineを活用する機能を実装
+squareのpaymentFormを利用して決済を実装<br>
+lineメッセージ通知機能などline-bot機能を実装<br>
+face-api.jsで写真顔認証を実装<br>
 
-開発用（実行されたソースをAWS Lambdaで動かすことを参考中）
+開発用（実行されたソースをAWS Lambdaかserverで動かすことは未定）
 
 
 
-参考Git 
+参考
 
 square<br>
 https://github.com/square/sqpaymentform-nodejs-starterkit<br>
