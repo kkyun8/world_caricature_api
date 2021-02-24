@@ -1,4 +1,6 @@
 import line from "@line/bot-sdk";
+import paymentFormat from "../../config/line/message_format/paymentFormat.js";
+import { createLineBubbleFlexMsg } from "../../config/line/messageDesign.js";
 
 export const lineConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
@@ -13,14 +15,41 @@ export const lineBot = line;
  * @param {*} event
  */
 export function lineHandleEvent(event) {
-  if (event.type === "message" || event.message.type === "text") {
+  console.log("メッセージ受信");
+
+  let hasReturnMsg = true;
+  // 返事text obj
+  let result = { type: "text", text: "" };
+  try {
     //TODO: メッセージ内容に合わせて注文情報リターン
-  } else if (event.message.type === "image") {
-    //TODO: イメージの場合
+    if (event.type === "message" || event.message.type === "text") {
+      // TODO: db確認
+      const product = {};
+      const order = {};
+
+      const messageText = event.message.text;
+      // flex messageは必須項目が設定されてないと400エラーになる
+      switch (messageText) {
+        case "注文確認":
+          break;
+        case "写真登録":
+          break;
+        case "決済確認":
+          result = createLineBubbleFlexMsg(product, order, paymentFormat);
+          break;
+        default:
+          hasReturnMsg = false;
+          break;
+      }
+    }
+  } catch (error) {
+    result.text = "情報読み込み中エラーが発生しました。";
   }
 
-  // TODO: mock echo
-  const echo = { type: "text", text: event.message.text };
+  if (!hasReturnMsg) {
+    result.text = "命令メッセージが間違っております。再入力してください。";
+  }
 
-  return lineClient.replyMessage(event.replyToken, echo);
+  console.log("メッセージリターン");
+  return lineClient.replyMessage(event.replyToken, result);
 }
