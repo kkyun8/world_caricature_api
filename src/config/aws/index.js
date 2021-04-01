@@ -9,4 +9,15 @@ const region = process.env.AWS_DEFAULT_REGION;
 export const Bucket = process.env.AWS_BUCKET;
 
 AWS.config.update({ region });
+
 export const s3 = new AWS.S3({ accessKeyId, secretAccessKey });
+
+export const ddb = new AWS.DynamoDB({
+  // local TODO:
+  endpoint: "http://localhost:3000/dynamodb",
+  region: "ap-northeast-1",
+  accessKeyId,
+  secretAccessKey,
+});
+
+export const ses = new AWS.SES();
