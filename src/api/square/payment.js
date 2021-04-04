@@ -1,63 +1,79 @@
 import crypto from "crypto";
-import squareConnect from "square-connect";
-import { SquareConnectInit } from "../square/index.js";
-
+import { squareClient } from "../square/index.js";
+import { orderStatusLabels, updateOrder } from "../aws/dynamodb.js";
 /**
  * リクエスト情報から決済を実行する
  *
- * @param {*} body
+ * @param {*} requestBody
  */
-export const payment = async (body) => {
-  // TODO: 改善
-  SquareConnectInit();
+export const createOrderPayment = async (requestBody) => {
+  let info = {
+    result: undefined,
+    errors: undefined,
+    payment: undefined,
+  };
 
-  const request_params = body;
-  const { amount, currency, order } = body;
-
+  const { nonce } = requestBody;
+  const { amount, currency, order } = requestBody;
+  const NumberAmount = parseInt(amount, 10);
   // length of idempotency_key should be less than 45
-  const idempotency_key = crypto.randomBytes(22).toString("hex");
+  const idempotencyKey = crypto.randomBytes(22).toString("hex");
 
   // Charge the customer's card
-  const payments_api = new squareConnect.PaymentsApi();
+  const paymentsApi = squareClient.paymentsApi;
 
-  const request_body = {
-    source_id: request_params.nonce,
-    amount_money: {
-      amount,
-      currency,
-    },
-    idempotency_key,
+  const amountMoney = {
+    amount: NumberAmount,
+    currency,
+  };
+
+  const body = {
+    sourceId: nonce,
+    idempotencyKey,
+    amountMoney,
   };
 
   try {
-    const { result, ...httpResponse } = await payments_api.createPayment(
-      request_body
-    );
-    console.log(result);
-    // TODO:
-    // res.status(200).json({
-    //   title: "Payment Successful",
-    //   result: result,
-    // });
-    const { payment, errors } = httpResponse;
-    if (errors) {
-      // TODO: createError
+    const { result, ...httpResponse } = await paymentsApi.createPayment(body);
+    const { payment, errors } = result;
+    const { statusCode } = httpResponse;
+
+    info = {
+      result,
+      payment,
+    };
+
+    if (!errors && statusCode === 200) {
+      const seconed = orderStatusLabels.find((o) => o.label_id.N == 2);
+      order.order_status.S = seconed.label.S;
+
+      const { status, orderId, sourceType } = payment;
+      order.payment_status.S = status;
+      order.payment_order_id.S = orderId;
+      order.payment_source_type.S = sourceType;
+      order.idempotency_key.S = idempotencyKey;
+
+      const updateResult = updateOrder(order);
+      await updateResult
+        .then((res) => {
+          const code = res.$response?.httpResponse?.statusCode;
+          if (code === 200) {
+            // TODO: AWS SES mail or line message
+          } else {
+            throw "ddb updateItem error";
+          }
+        })
+        .catch((err) => {
+          throw err;
+        });
     } else {
-      order.paymentStatus = payment.status;
-      order.paymentOrderId = payment.order_id;
-      order.paymentSourceType = payment.source_type;
-      order.status = 2;
-      order.idempotencyKey = idempotency_key;
-      // TODO: create url key
-      order.pictureUrlKey = "";
-      // TODO: createOrder DB insert
-      // TODO: AWS SES mail or line message
+      throw errors;
     }
-  } catch (error) {
-    // TODO: error
-    // res.status(500).json({
-    //   title: "Payment Failure",
-    //   result: error.response.text,
-    // });
+  } catch (errors) {
+    // TODO: insert error table
+    console.log(errors);
+    info.errors = errors;
   }
+
+  return info;
 };

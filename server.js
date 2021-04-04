@@ -7,7 +7,7 @@ import {
   tmpOutDirPath,
   tmpFaceapiUploadedDirPath,
 } from "./src/config/index.js";
-import { payment } from "./src/api/square/payment.js";
+import { createOrderPayment } from "./src/api/square/payment.js";
 import { faceDetect } from "./src/api/faceapi/index.js";
 import { deleteAllOrderPicture, putOrderPicture } from "./src/api/aws/s3.js";
 import dotenv from "dotenv";
@@ -34,19 +34,15 @@ app.use(express.static(__dirname));
 /**
  * 決済処理
  */
-app.post("/process-payment", (req, res) => {
-  payment(req.body);
-  // TODO: response result
-  res.send(JSON.stringify({ ok: true }));
-  //   res.status(200).json({
-  //     title: "Payment Successful",
-  //     result: result,
-  //   });
-  //   res.status(500).json({
-  //     title: "Payment Failure",
-  //     result: error.response.text,
-  //   });
-  // }
+app.post("/process-payment", async (req, res) => {
+  const { errors, payment } = await createOrderPayment(req.body);
+
+  const status = errors ? 404 : 200;
+  res.status(status).send({
+    result: "OK",
+    errors,
+    paymentStatus: payment?.status ? payment.status : "FAIL",
+  });
 });
 
 /**
