@@ -53,27 +53,25 @@ const upload = multer({ dest: "tmp/faceapi/uploaded" });
 app.post("/face-api", upload.array("files"), async (req, res) => {
   try {
     const startTime = new Date().getTime();
-    const { orderNumber } = req.body;
+    const { orderId } = req.body;
     console.log(
-      `---------------start /face-api 対象orderNumber:${orderNumber}---------------`
+      `---------------start /face-api 対象orderId:${orderId}---------------`
     );
 
-    // すでにバケットにOrderNumber名でフォルダが存在する場合、削除する
-    await deleteAllOrderPicture(orderNumber);
+    // すでにバケットにorderId名でフォルダが存在する場合、削除する
+    await deleteAllOrderPicture(orderId);
 
     // Webからの添付ファイルから顔認識、
     const resultImgs = await faceDetect(req.files);
 
-    const putResult = await putOrderPicture(req.body.orderNumber, resultImgs);
+    const putResult = await putOrderPicture(req.body.orderId, resultImgs);
 
     const ProcTime = new Date().getTime() - startTime;
     console.log(
       `---------------end /face-api 実行時間:${ProcTime}---------------`
     );
 
-    res.send(
-      JSON.stringify({ ok: putResult.ok, orderNumber: req.body.orderNumber })
-    );
+    res.send(JSON.stringify({ ok: putResult.ok, orderId: req.body.orderId }));
     // tmp フォルダ削除
     deleteTmpData(tmpOutDirPath);
     deleteTmpData(tmpFaceapiUploadedDirPath);
